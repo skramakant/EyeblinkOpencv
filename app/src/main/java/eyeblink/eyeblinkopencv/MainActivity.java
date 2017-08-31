@@ -15,6 +15,8 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.dnn.Importer;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
@@ -32,10 +34,10 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     }
 
     private JavaCameraView javaCameraView;
-
+    boolean flag = true;
     // These variables are used (at the moment) to fix camera orientation from 270degree to 0degree
     Mat mRgba;
-    Mat mRgbaF;
+    Mat mRgbaG;
     Mat mRgbaT;
 
 
@@ -55,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         javaCameraView.setVisibility(SurfaceView.VISIBLE);
         //javaCameraView.disableFpsMeter();
         javaCameraView.setKeepScreenOn(true);
+
         //javaCameraView.setMaxFrameSize(600,900);
     }
 
@@ -63,13 +66,13 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
      * which is packaged with this application.
      */
     public native String stringFromJNI();
-    public native String testFunction();
+    public native int findImgContours(long mRgbG, long mRgbaT);
     public native String funSpotDetection();
 
     @Override
     public void onCameraViewStarted(int width, int height) {
         mRgba = new Mat(height, width, CvType.CV_8UC4);
-        mRgbaF = new Mat(height, width, CvType.CV_8UC4);
+        mRgbaG = new Mat(height, width, CvType.CV_8UC4);
         mRgbaT = new Mat(width, width, CvType.CV_8UC4);
     }
 
@@ -82,12 +85,20 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         // TODO Auto-generated method stub
         mRgba =inputFrame.rgba();
-        Imgproc.cvtColor(mRgba,mRgbaF,Imgproc.COLOR_RGBA2GRAY);
+        Imgproc.cvtColor(mRgba,mRgbaG,Imgproc.COLOR_RGBA2GRAY);
+        if(true){
+            int abc = findImgContours(mRgbaG.getNativeObjAddr(),mRgbaT.getNativeObjAddr());
+            Log.v("ramakant", String.valueOf(abc));
+            flag = false;
+        }
+        //Imgproc.threshold(mRgbaF,mRgbaT,130,255,Imgproc.THRESH_BINARY);
+        //Imgproc.findContours();
+
         // Rotate mRgba 90 degrees
         //Core.transpose(mRgba, mRgbaT);
         //Imgproc.resize(mRgbaT, mRgbaF, mRgbaF.size(), 0,0, 0);
         //Core.flip(mRgbaF, mRgba, 1 );
-        return mRgbaF;
+        return mRgbaT;
     }
 
     BaseLoaderCallback baseloaderCallback = new BaseLoaderCallback(this) {
