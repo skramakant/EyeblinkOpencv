@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <string>
 #include <opencv2/opencv.hpp>
+#include <android/log.h>
 
 using namespace cv;
 using namespace std;
@@ -37,16 +38,16 @@ Java_eyeblink_eyeblinkopencv_MainActivity_thresh_callback(Mat src_gray,int, void
 
 extern "C"
 JNIEXPORT jint JNICALL
-Java_eyeblink_eyeblinkopencv_MainActivity_findImgContours(JNIEnv *env, jobject instance,
+Java_eyeblink_eyeblinkopencv_MainActivity_findImgContours(JNIEnv *env, jobject instance,jlong mRgbA,
                                                           jlong mRgbG,jlong mRgbT) {
 
-
+    Mat& mR = *(Mat*) mRgbA;
     Mat& mG = *(Mat*) mRgbG;
     Mat& mT = *(Mat*) mRgbT;
     //cvThreshold(mRgbG,mT,200,255,CV_THRESH_BINARY);
+    GaussianBlur(mG , mG, cv::Size(0, 0), 3, 3 );
+    threshold(mG,mT,250,255,CV_THRESH_BINARY);
 
-    //cvtColor(mG,mT,CV_BGR2GRAY);
-    threshold(mG,mT,240,255,CV_THRESH_BINARY);
     //Mat& grayscale = *(Mat*)mRgbT;
     //std::string  returnValue = "true";
 //    IplImage* grayscale = (IplImage *) mRgbT;
@@ -69,25 +70,78 @@ Java_eyeblink_eyeblinkopencv_MainActivity_findImgContours(JNIEnv *env, jobject i
     //IplImage* img_bw_cpy = cvCloneImage( img_bw );
 
     // Find connected components using OpenCV
-    CvSeq* seq;
-    CvMemStorage* storage = cvCreateMemStorage( 0 );
-
-    cvClearMemStorage( storage );
-      int num_blobs;
-    IplImage tmp = mT;
-
-    num_blobs = cvFindContours( &tmp,
-                                storage,
-                                &seq,
-            sizeof( CvContour ),
-            CV_RETR_LIST,
-            CV_CHAIN_APPROX_NONE,
-            cvPoint( 0, 0 ) );
+//    CvSeq* seq;
+//    CvMemStorage* storage = cvCreateMemStorage( 0 );
+//
+//    cvClearMemStorage( storage );
+//      int num_blobs;
+//    IplImage tmp = mT;
+//
+//    num_blobs = cvFindContours( &tmp,
+//                                storage,
+//                                &seq,
+//            sizeof( CvContour ),
+//            CV_RETR_LIST,
+//            CV_CHAIN_APPROX_NONE,
+//            cvPoint( 0, 0 ) );
 
 
     //Java_eyeblink_eyeblinkopencv_MainActivity_thresh_callback(mG,0,0);
 
-    return num_blobs;
+    //find blob
+
+    // Setup SimpleBlobDetector parameters.
+    SimpleBlobDetector::Params params;
+    params.filterByColor =true;
+    params.blobColor=255;
+
+
+//// Change thresholds
+//    params.thresholdStep = 5;
+//    params.minThreshold = 230;
+//    params.maxThreshold = 255;
+
+    //Filter by Area.
+//    params.filterByArea = true;
+//    params.minArea = 150;
+    //params.maxArea = 100;
+//
+//// Filter by Circularity
+    params.filterByCircularity = true;
+//    params.minCircularity = 0.8;
+//    params.maxCircularity = 1.0;
+
+//// Filter by Convexity
+    //params.filterByConvexity = true;
+//    params.minConvexity = 0.87;
+
+//// Filter by Inertia
+    //params.filterByInertia = true;
+//    params.minInertiaRatio = 0.01;
+
+
+
+// Set up the detector with default parameters.
+    //SimpleBlobDetector detector;
+    Ptr<SimpleBlobDetector> detector = SimpleBlobDetector::create(params);
+
+// Detect blobs.
+    std::vector<KeyPoint> keypoints;
+    detector->detect( mT, keypoints);
+    //__android_log_print(ANDROID_LOG_VERBOSE, "EyeblinkOpencv", "ramakant size = %f",keypoints.max_size() );
+    for(int i=0;i<keypoints.size();i++){
+        float a = keypoints[0].size;
+        __android_log_print(ANDROID_LOG_VERBOSE,"EyeblinkOpencv", "ramakant float = %f",a);
+        if(a > 27.0)
+            putText(mR, "Spoofing", Point2f(40,120), FONT_HERSHEY_SIMPLEX, 4,  Scalar(255));
+    }
+    //putText(mT, "Spoofing", Point2f(20,40), FONT_HERSHEY_SIMPLEX, 2,  Scalar(255));
+// Draw detected blobs as red circles.
+// DrawMatchesFlags::DRAW_RICH_KEYPOINTS flag ensures the size of the circle corresponds to the size of blob
+    Mat im_with_keypoints;
+    //drawKeypoints( mT, keypoints, mT, Scalar(255,0,0), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
+
+    return 0;
 }
 
 extern "C"

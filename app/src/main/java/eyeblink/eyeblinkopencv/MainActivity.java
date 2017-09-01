@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
      * which is packaged with this application.
      */
     public native String stringFromJNI();
-    public native int findImgContours(long mRgbG, long mRgbaT);
+    public native int findImgContours(long mRgbA,long mRgbG, long mRgbaT);
     public native String funSpotDetection();
 
     @Override
@@ -87,8 +87,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         mRgba =inputFrame.rgba();
         Imgproc.cvtColor(mRgba,mRgbaG,Imgproc.COLOR_RGBA2GRAY);
         if(true){
-            int abc = findImgContours(mRgbaG.getNativeObjAddr(),mRgbaT.getNativeObjAddr());
-            Log.v("ramakant", String.valueOf(abc));
+            int abc = findImgContours(mRgba.getNativeObjAddr(),mRgbaG.getNativeObjAddr(),mRgbaT.getNativeObjAddr());
+            //Log.v("ramakant", String.valueOf(abc));
             flag = false;
         }
         //Imgproc.threshold(mRgbaF,mRgbaT,130,255,Imgproc.THRESH_BINARY);
@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         //Core.transpose(mRgba, mRgbaT);
         //Imgproc.resize(mRgbaT, mRgbaF, mRgbaF.size(), 0,0, 0);
         //Core.flip(mRgbaF, mRgba, 1 );
-        return mRgbaT;
+        return mRgba;
     }
 
     BaseLoaderCallback baseloaderCallback = new BaseLoaderCallback(this) {
